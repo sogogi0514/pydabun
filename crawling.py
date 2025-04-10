@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import json
 import time
-
+#
 # 사용자 에이전트 정의
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
@@ -20,11 +20,12 @@ def news_url(query):
     title_list = []
 
     while page <= 151:
+        #url에 대해
         url = (
                 "https://m.search.naver.com/search.naver?where=m_news&sm=tab_pge&query="
                 + query +
                 "&sort=0&photo=0&field=0&pd=1&ds=&de=&cluster_rank=129&mynews=0&office_type=0"
-                "&office_section_code=0&news_office_checked=&nso=so:r,p:1w,a:all&start=" + str(page)
+                "&office_section_code=0&news_office_checked=&nso=so:r,p:1w,a:all&start=" + str(page) #start은 최소 1 최대 1000임
         )
         headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
@@ -98,7 +99,7 @@ def get_press_name(press_id):
 # 뉴스 이름을 html에서 가져오는 함수- news_url 함수 안에서 사용해서 별도의 html요청 없이 링크를 가져오려고 하는 html에서 추출
 def get_title_name(atag):
     news_title_name=atag.find('div').text.strip()
-    print(news_title_name)
+    print(news_title_name) #가져 오는 뉴스 이름 확인용
     return news_title_name
 
 
@@ -157,36 +158,38 @@ def comment(url_list,news_title_list):
                 if not comment_list:
                     print("comment 가져오기 실패")
                     break
-                user_nickname=[i['userName'] for i in comment_list]
-                comments = [c['contents'] for c in comment_list]
-                total_comment.extend(comments)
-                comment_list_sum=list(zip(user_nickname, comments))
+                #아래는 가져온 comment_list( 위에서 요청한 json 내용 으로 'contents': '탄해반대집회는~~' 형태로 존재)
+                user_nickname=[k['userName'] for k in comment_list] #json 내용에서 userName에 해당하는 부분을 가져와 리스트로 저장시킴
+                comments = [c['contents'] for c in comment_list] #json에서 contents에 해당하는 부분을 가져와 리스트로 저장시킴
+                total_comment.extend(comments) #없어도 되는 코드 gptexample에 있던 코드
+                comment_list_sum=list(zip(user_nickname, comments)) #df로 저장하기 위해 묶어줌
                 col=['작성자','내용']
-                df=pd.DataFrame(comment_list_sum, columns=col)
+                df=pd.DataFrame(comment_list_sum, columns=col) # columns를 작성자, 내용 으로 가지는 df생성
+                #파일을 저장하기 위한 경로 이름 생성, 파일 이름 생성
                 news_name=get_press_name(oid_2) #언론사 id를 언론사 이름 str로 바꾸는 함수
                 folder_path=f'./{news_name}'
                 os.makedirs(folder_path, exist_ok=True) #이 py가 있는 경로에 "언론사이름"을 이름으로 하는 폴더 생성, 존재시 넘어감
                 file_name= f"{news_name}_{news_title_list[news_title_list_num]}.xlsx" #파일 이름을 언론사_뉴스제목 으로 정의
-                while os.path.exists(f"{folder_path}/{file_name}"):
+                if os.path.exists(f"{folder_path}/{file_name}"): #같은 이름 존재시 break
                     print(f"{folder_path}/{file_name} 이미 존재함. ")
-                    break;
+                    continue;
                 df.to_excel(f"{folder_path}/{file_name}", index=False) #엑셀파일로 저장 다른 형식으로 바꾸고자 하면  .xlsx와 이 메소드 바꾸면 됨.
 
 
-                if len(comments) < 97:
+                if len(comments) < 97: #연령 데이터 가져오려면 < 101 으로 설정 설정해야 함
                     break
                 else:
-                    i += 1
+                    i += 1 # 다음페이지 가져오기 위한 변수 같음 params= ..., 'page'=str(i),...
                     time.sleep(0.3)
             except Exception as e:
                 print(f"[에러 발생] {url_ex}: {e}")
                 break
 
-    return total_comment
+    return total_comment #필요 없음
 
 
 query = "탄핵"  # 원하는 검색어
-encoded_query = urllib.parse.quote(query)
+encoded_query = urllib.parse.quote(query) #url에 쿼리스트링에 한글 사용하려면 인코딩 필수
 
 news_links, news_title = news_url(encoded_query)
 print(f"{len(news_links)}개의 뉴스 링크 수집 완료")
