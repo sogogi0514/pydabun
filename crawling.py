@@ -213,7 +213,7 @@ def comment(url_list,news_title_list, news_date):
                 if len(comments) < 97: #연령 데이터 가져오려면 < 101 으로 설정 설정해야 함
                     break
                 else:
-                    i += 1 # 다음페이지 가져오기 위한 변수 같음 params= ..., 'page'=str(i),...
+                    i += 1 # 다음페이지 가져오기 위한 변수 같음 params= ..., 'page'=str(i),...1
                     time.sleep(0.3)
             except Exception as e:
                 print(f"[에러 발생] {url_ex}: {e}")
