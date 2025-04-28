@@ -210,10 +210,11 @@ def comment(url_list,news_title_list, news_date):
                 df.to_excel(f"{folder_path}/{file_name}", index=False) #엑셀파일로 저장 다른 형식으로 바꾸고자 하면  .xlsx와 이 메소드 바꾸면 됨.
 
 
-                if len(comments) < 97: #연령 데이터 가져오려면 < 101 으로 설정 설정해야 함
+                if len(comments) < 97:
                     break
                 else:
-                    i += 1 # 다음페이지 가져오기 위한 변수 같음 params= ..., 'page'=str(i),...1
+                    i += 1 # 다음페이지 가져오기 위한 변수 같음 params= ..., 'page'=str(i),...1 pageSize=100은 한 페이지당 불러올 댓글 최대가 100이기 떄문에 다음페이지로
+                    #넘겨야함 즉 i 값 증가시켜서 다음 페이지 댓글 최대 100개를 불러옴
                     time.sleep(0.3)
             except Exception as e:
                 print(f"[에러 발생] {url_ex}: {e}")
