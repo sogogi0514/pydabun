@@ -135,6 +135,8 @@ def comment(url_list,news_title_list, news_date):
     total_comment = []
     url_list_num=0
     news_title_list_num=0
+    user_nickname=[]
+    comments=[]
     for url_ex in url_list:
         url = url_ex.split('?')[0]
         oid_1 = url.split('/')[-1]
@@ -185,35 +187,43 @@ def comment(url_list,news_title_list, news_date):
                     print("comment 가져오기 실패")
                     break
                 #아래는 가져온 comment_list( 위에서 요청한 json 내용 으로 'contents': '탄해반대집회는~~' 형태로 존재)
-                user_nickname=[k['userName'] for k in comment_list] #json 내용에서 userName에 해당하는 부분을 가져와 리스트로 저장시킴
-                comments = [c['contents'] for c in comment_list] #json에서 contents에 해당하는 부분을 가져와 리스트로 저장시킴
-                total_comment.extend(comments) #없어도 되는 코드 gptexample에 있던 코드
-                comment_list_sum=list(zip(user_nickname, comments)) #df로 저장하기 위해 묶어줌
-                col=['작성자','내용']
-                df=pd.DataFrame(comment_list_sum, columns=col) # columns를 작성자, 내용 으로 가지는 df생성
-                #파일을 저장하기 위한 경로 이름 생성, 파일 이름 생성
-                news_name=get_press_name(oid_2) #언론사 id를 언론사 이름 str로 바꾸는 함수
-                folder_path=f'./test1/{news_name}'
-                # folder_path=f'./{news_name}'
-                os.makedirs(folder_path, exist_ok=True) #이 py가 있는 경로에 "언론사이름"을 이름으로 하는 폴더 생성, 존재시 넘어감
-                print(news_title_list_num)
-                if news_title_list_num >= len(news_title_list):
-                    print(f"news_title_list_num{news_title_list_num}이 news_title_list {len(news_title_list)}길이를 초과했습니다.")
-                    break
 
-                file_name= f"{news_date}_{news_name}_{news_title_list[news_title_list_num]}.xlsx"
-                news_title_list_num += 1
-                #파일 이름을 언론사_뉴스제목 으로 정의
-                if os.path.exists(f"{folder_path}/{file_name}"): #같은 이름 존재시 break
-                    print(f"{folder_path}/{file_name} 이미 존재함. ")
-                    continue;
-                df.to_excel(f"{folder_path}/{file_name}", index=False) #엑셀파일로 저장 다른 형식으로 바꾸고자 하면  .xlsx와 이 메소드 바꾸면 됨.
+                if ((not user_nickname) and (not comments)):
+                    user_nickname = [k['userName'] for k in comment_list]  # json 내용에서 userName에 해당하는 부분을 가져와 리스트로 저장시킴
+                    comments = [c['contents'] for c in comment_list]  # json에서 contents에 해당하는 부분을 가져와 리스트로 저장시킴
+                else:
+                    user_nickname.extend([k['userName'] for k in comment_list])
+                    comments.extend([c['contents'] for c in comment_list])
 
 
-                if len(comments) < 97:
+                if len(comment_list) < 98:
+                    #total_comment.extend(comments) #없어도 되는 코드 gptexample에 있던 코드
+                    comment_list_sum=list(zip(user_nickname, comments)) #df로 저장하기 위해 묶어줌
+                    col=['작성자','내용']
+                    df=pd.DataFrame(comment_list_sum, columns=col) # columns를 작성자, 내용 으로 가지는 df생성
+                    #파일을 저장하기 위한 경로 이름 생성, 파일 이름 생성
+                    news_name=get_press_name(oid_2) #언론사 id를 언론사 이름 str로 바꾸는 함수
+                    folder_path=f'./test3/{news_name}'
+                    # folder_path=f'./{news_name}'
+                    os.makedirs(folder_path, exist_ok=True) #이 py가 있는 경로에 "언론사이름"을 이름으로 하는 폴더 생성, 존재시 넘어감
+                    print(news_title_list_num)
+                    if news_title_list_num >= len(news_title_list):
+                        print(f"news_title_list_num{news_title_list_num}이 news_title_list {len(news_title_list)}길이를 초과했습니다.")
+                        break
+
+                    file_name= f"{news_date}_{news_name}_{news_title_list[news_title_list_num]}.xlsx"
+                    news_title_list_num += 1
+                    #파일 이름을 언론사_뉴스제목 으로 정의
+                    if os.path.exists(f"{folder_path}/{file_name}"): #같은 이름 존재시 break
+                        print(f"{folder_path}/{file_name} 이미 존재함. ")
+                        continue;
+                    df.to_excel(f"{folder_path}/{file_name}", index=False) #엑셀파일로 저장 다른 형식으로 바꾸고자 하면  .xlsx와 이 메소드 바꾸면 됨.
+                    comment_list_sum = []
+                    comments=[]
+                    user_nickname= []
                     break
                 else:
-                    i += 1 # 다음페이지 가져오기 위한 변수 같음 params= ..., 'page'=str(i),...1 pageSize=100은 한 페이지당 불러올 댓글 최대가 100이기 떄문에 다음페이지로
+                    i += 1 # params= ..., 'page'=str(i),...에서  pageSize=100은 한 페이지당 불러올 댓글 최대가 100이기 떄문에 다음페이지로
                     #넘겨야함 즉 i 값 증가시켜서 다음 페이지 댓글 최대 100개를 불러옴
                     time.sleep(0.3)
             except Exception as e:
@@ -223,7 +233,7 @@ def comment(url_list,news_title_list, news_date):
     return total_comment #필요 없음
 
 
-query = "탄핵"  # 원하는 검색어
+query = "윤석열 탄핵"  # 원하는 검색어
 encoded_query = urllib.parse.quote(query) #url에 쿼리스트링에 한글 사용하려면 인코딩 필수
 date= datetime.date(2024, 12, 4)
 while(date< datetime.date(2025, 1, 10)):
